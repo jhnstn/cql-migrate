@@ -11,6 +11,26 @@ Requires leiningen v2.x.x and a running cassandra server v1.1.x
 
 ## Usage
 
+### From Standalone
+
+ download the latest jar [here](https://github.com/downloads/snrobot/cql-migrate/cql-migrate-0.1.0-standalone.jar)
+ 
+ then run
+ 
+ ```
+ java -jar cql-migrate-<release>-standalone.jar [SWITCHES] ... [COMMAND]
+ ````
+ for full list of switches and commands run
+ 
+ ```
+  java -jar cql-migrate-<release>-standalone.jar [SWITCHES] ... [COMMAND]
+ ```
+ 
+
+====
+### From source
+ you can use leiningen to build a jar or run directly
+ 
 ### Initialize
  The migration tool must be initialized before running any migrations.
  
