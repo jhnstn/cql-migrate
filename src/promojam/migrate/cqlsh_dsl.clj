@@ -1,6 +1,7 @@
 (ns promojam.migrate.cqlsh-dsl
   (:use [clojure.set])
-  (:require [clojure.string :as cstr]))
+  (:require [clojure.string :as cstr])
+  (:gen-class))
 
 (defmacro columns [& cols]
   (def dt [:blob	:ascii	:text :varchar	:varint	 :int  :uuid
