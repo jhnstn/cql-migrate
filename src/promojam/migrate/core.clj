@@ -1,5 +1,6 @@
 (ns promojam.migrate.core
-  (:use [clojure.set]
+  (:use [promojam.migrate.cqlsh-dsl]
+        [clojure.set]
         [clojure.java.shell :only [sh]]
         [clojure.string :only (split)]
         [clojure.contrib.trace :only (dotrace)]
@@ -37,8 +38,8 @@
 (defn get-migrations
   "get a lazy sequence of files in a directory"
   [d]
- (remove false? (for [f (.listFiles d)]
-    (and  (.isFile f) (= "cql" (-> (.getName f) (split #"\.") last ))
+ (remove nil? (for [f (.listFiles d)]
+    (and  (.isFile f) (re-find #"[cql|clj]$"  (.getName f) )
       (.getName f)))))
 
 
@@ -46,7 +47,7 @@
   "Mimic cqlsh's source command"
   [host f]
   (let [file (str "--file=" f)
-        result (sh "cqlsh" "--cql3" host  file)
+        result  {:msg "noop"} ;(sh "cqlsh" "--cql3" host  file)
         err  (get result :err)
         ]
     (try
@@ -85,13 +86,21 @@
            new-files (difference (difference files #{false}) ran)
           ]
       (if (empty? new-files) (prn "No new migrations found")
+
         (do
-         (if verbose (println "Running migrations at host " host))
-		      (doseq [ f new-files ]
-		        (let [file (str dir f)]
-			        (try
-			          (cc/connect! host  ks)
-               		            (cql-source host file)
+          (if verbose (println "Running migrations at host " host))
+          (doseq [ f new-files ]
+            (let [file (str dir f)]
+              (try
+
+                (if (re-find #"[.cql]$" f)
+                  (cql-source host file)
+                  (doseq [query (load-file file)]
+                    (if (vector? query)
+                      (doseq [sub-query query]
+                        (cql/execute sub-query)
+                    (cql/execute query)))))
+                (cc/connect! host  ks)
 			          (cql/insert "history" {:action "update"
 			                                 :file f
 			                                 :migrated_on (tf/unparse timestamp-formatter (tm/now))

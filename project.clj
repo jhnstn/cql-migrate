@@ -1,7 +1,8 @@
-(defproject cql-migrate "0.1.0"
+(defproject cql-migrate "0.1.1"
   :description "Simple migration tool for cassandra backed projects via CQL"
   :url "http://github.com/snrobot"
   :main promojam.migrate.core
+  :uberjar-name "cql-migrate.jar"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
