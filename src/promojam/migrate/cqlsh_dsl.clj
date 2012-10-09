@@ -37,3 +37,12 @@
 
 (defn create-tables [& tables]
   (into [] (map #(create-table (first %) (second %)) tables)))
+
+(defn drop-tables [keyspace & tables]
+
+  (into [(str "USE " keyspace ";")]( map #(str "DROP TABLE " % ";") tables)))
+
+
+(defmacro cql-migrate [& cmds]
+
+  (into [] (map #(eval %) cmds)))

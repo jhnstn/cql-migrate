@@ -47,7 +47,7 @@
   "Mimic cqlsh's source command"
   [host f]
   (let [file (str "--file=" f)
-        result  {:msg "noop"} ;(sh "cqlsh" "--cql3" host  file)
+        result  (sh "cqlsh" "--cql3" host  file)
         err  (get result :err)
         ]
     (try
@@ -92,23 +92,20 @@
           (doseq [ f new-files ]
             (let [file (str dir f)]
               (try
-
                 (if (re-find #"[.cql]$" f)
                   (cql-source host file)
-                  (doseq [query (load-file file)]
-                    (if (vector? query)
-                      (doseq [sub-query query]
-                        (cql/execute sub-query)
-                    (cql/execute query)))))
+                  (doseq [q (flatten (load-file file))]
+
+                      (if verbose (println q))
+                      (cql/execute q)))
                 (cc/connect! host  ks)
-			          (cql/insert "history" {:action "update"
+                (cql/insert "history" {:action "update"
 			                                 :file f
 			                                 :migrated_on (tf/unparse timestamp-formatter (tm/now))
 			                                 :success "true"}{})
 		            (if verbose (println "Finished migrating " f ))
 			          (catch Exception e ( println "Unable to run " f )
 			                             ( println e )))))))))
-
 
 
 
