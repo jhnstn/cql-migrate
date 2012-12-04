@@ -43,6 +43,20 @@
   (into [(str "USE " keyspace ";")]( map #(str "DROP TABLE " % ";") tables)))
 
 
+(defn create-keyspace [keyspace placement-strategy strategy-options]
+  (case placement-strategy
+    "NetworkTopologyStrategy" (let [data-centers (reduce #(str %1 "," %2)
+                                                         (map #(str (-> name first %) ":" (second %))
+                                                              strategy-options))]
+                                 [(format "CREATE KEYSPACE %s WITH strategy_class = 'NetworkTopologyStrategy' AND strategy_options:{%s}"
+                                          keyspace data-centers)])
+    "SimpleStrategy" (if (number? (Integer. strategy-options))
+                       [(format "CREATE KEYSPACE %s WITH strategy_class = 'SimpleStrategy' AND strategy_options:replication_factor = %s"
+                                keyspace strategy-options)]
+                       (throw (Exception. (str "Error: Invalid strategy option for SimpleStrategy: " strategy-options))))
+    (throw (Exception. (str "Error: Invalid placement strategy: " placement-strategy)))))
+
+
 (defmacro cql-migrate [& cmds]
 
   (into [] (map #(eval %) cmds)))

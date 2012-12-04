@@ -50,6 +50,7 @@
         result  (sh "cqlsh" "--cql3" host  file)
         err  (get result :err)
         ]
+    (println "running source")
     (try
       (if (not-empty err )
         (throw (Exception. err))))
@@ -85,6 +86,7 @@
            files (set ( sort (get-migrations (File. dir))))
            new-files (difference (difference files #{false}) ran)
           ]
+
       (if (empty? new-files) (prn "No new migrations found")
 
         (do
@@ -96,6 +98,7 @@
                   (cql-source host file)
                   (doseq [q (flatten (load-file file))]
 
+                      (println q)
                       (if verbose (println q))
                       (cql/execute q)))
                 (cc/connect! host  ks)
@@ -129,6 +132,22 @@
         (prn e)))))
 
 
+
+(defn- show-help [banner]
+  (do
+    (println "CQL MIGRATION")
+    (println)
+    (println "Options:")
+    (println " [-h][-d][-k] migrate - runs the migrations in -d at host -h and updates -k with migration history")
+    (println " [-h][-k] init    - intializes the migration history at host -h in keyspace -k")
+    (println " [-h][-k] history - fetch the migration history at host -h in keyspace -k")
+    (println " [-d]     list    - show available migration files in -d")
+    (println " name - create a new migration name")
+    (println)
+    (println banner)))
+
+
+
 (defn -main
   "Run migration"
   [& args]
@@ -138,18 +157,11 @@
                                 ["-k" "--keyspace" "Cassandra migrations keyspace" :default "migrations"]
                                 ["-v" "--[no-]verbose" :default true]
                                 ["--help" "Show help" :flag true  :default false])
-        command (or (first com) "migrate")]
+        command (or (first com) "help")]
 
 
    (when (:help opts)
-     (println "CQL MIGRATION")
-     (println)
-     (println "Options:")
-     (println " [-h][-d] migrate - runs the migrations in -d at host -h ")
-     (println " [-h][-k] init    - intializes the migration history at host -h in keyspace -k")
-     (println " [-h][-k] history - fetch the migration history at host -h in keyspace -k")
-     (println)
-     (println banner)
+     (show-help banner)
      (System/exit 0))
    (case command
      "migrate" (do (migrate opts) (System/exit 0))
@@ -160,5 +172,13 @@
                  (doseq [f history]
                    (println "\t" f))
                  (System/exit 0))
+     "list"    (do
+                   (println "Available migration files in " (:dir opts))
+                   (doseq [f (get-migrations (File. (:dir opts)))]
+                     (println "\t" f))
+                 (System/exit 0))
 
-     "default" (println command " is not an option. use --help for more info on usage"))))
+     "help"  (do
+               (show-help banner)
+               (System/exit 0))
+     (println command " is not an option. use --help for more info on usage"))))
