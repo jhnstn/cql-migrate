@@ -21,9 +21,6 @@
 (def migrate-formatter ( tf/formatter "YYYYMMDDHHMMSS"))
 (def timestamp-formatter (tf/formatter "yyyy-mm-dd HH:mm:ssZ"))
 
-
-
-
 (defn migrate-name
   "return formated name for migration file"
    ([]
@@ -97,8 +94,6 @@
                 (if (re-find #"[.cql]$" f)
                   (cql-source host file)
                   (doseq [q (flatten (load-file file))]
-
-                      (println q)
                       (if verbose (println q))
                       (cql/execute q)))
                 (cc/connect! host  ks)
